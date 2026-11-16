@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server'; import { z } from 'zod'; import { db } from '@/lib/prisma'; import { getSession } from '@/lib/auth';
+const schema=z.object({companyId:z.string(),status:z.enum(['PENDING','VERIFIED','FLAGGED','REJECTED'])});
+export async function PATCH(req:Request){const user=await getSession();if(!user||user.role!=='ADMIN')return NextResponse.json({error:'Administrator access required.'},{status:403});const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:'Invalid update.'},{status:400});try{const company=await db.company.update({where:{id:p.data.companyId},data:{status:p.data.status}});return NextResponse.json(company);}catch{return NextResponse.json({error:'Could not update company.'},{status:500});}}

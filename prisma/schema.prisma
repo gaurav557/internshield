@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FLAGGED
+  REJECTED
+}
+
+enum ReportStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now())
+  reports      FraudReport[]
+}
+
+model Company {
+  id                 String             @id @default(cuid())
+  name               String
+  website            String?
+  registrationNumber String?
+  industry           String?
+  location           String?
+  description        String?
+  status             VerificationStatus @default(PENDING)
+  riskScore          Int                @default(0)
+  riskLevel          RiskLevel          @default(LOW)
+  riskReasons        Json?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  internships        Internship[]
+  reports            FraudReport[]
+
+  @@index([name])
+  @@index([status])
+}
+
+model Internship {
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  applicationUrl String?
+  stipend        String?
+  isRemote       Boolean  @default(false)
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+}
+
+model FraudReport {
+  id          String       @id @default(cuid())
+  userId      String
+  companyId   String?
+  companyName String
+  listingUrl  String?
+  details     String
+  evidenceUrl String?
+  status      ReportStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([companyName])
+}

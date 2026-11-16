@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server'; import { z } from 'zod'; import { getSession } from '@/lib/auth'; import { analyzeWithAI } from '@/lib/ai-risk';
+const schema=z.object({name:z.string().optional(),website:z.string().optional(),description:z.string().optional(),listingUrl:z.string().optional(),stipend:z.string().optional(),registrationNumber:z.string().optional()});
+export async function POST(req:Request){if(!(await getSession()))return NextResponse.json({error:'Sign in required.'},{status:401});const parsed=schema.safeParse(await req.json());if(!parsed.success)return NextResponse.json({error:'Invalid analysis input.'},{status:400});return NextResponse.json(await analyzeWithAI(parsed.data));}
